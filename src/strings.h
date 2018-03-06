@@ -35,3 +35,27 @@ StringLengthTo(char *str, char stop)
 	return result;
 }
 
+template <typename T>
+T
+DecCharsToNum(char *str, size_t length)
+{
+    T result = {};
+
+	while (length--)
+	{
+		result = result * 10 + (*str++ - '0');
+	}
+
+    return result;
+}
+
+template <typename T>
+T
+HexCharsToNum(char *str)
+{
+    T result = {};
+
+    result = static_cast<T>(strtol(str, 0, 16));
+
+    return result;
+}

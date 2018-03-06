@@ -56,7 +56,7 @@ GetInstructionFromString(BinaryInstruction *result, char *src)
         addrString = src + lengthToSpace + 1;
         src[lengthToSpace] = '\0';
 
-        addr = CharsToNum<uint16>(addrString, strlen(addrString));
+        addr = DecCharsToNum<uint16>(addrString, strlen(addrString));
     }
 
     for (const SrcInstruction &instr : SRC_INSTRUCTIONS)
@@ -71,8 +71,24 @@ GetInstructionFromString(BinaryInstruction *result, char *src)
         }
     }
 
-    result->opCode = opCode;
-    result->addr = addr;
+    if (!valid)
+    {
+        if (stricmp(src, "DEC") == 0)
+        {
+            result->word = addr;
+            valid = true;
+        }
+        else if (stricmp(src, "HEX") == 0)
+        {
+            result->word = HexCharsToNum<uint16>(addrString);
+            valid = true;
+        }
+    }
+    else
+    {
+        result->opCode = opCode;
+        result->addr = addr;
+    }
 
     return valid;
 }
@@ -141,7 +157,7 @@ main(int argc, char **argv)
 
         if (validInstr)
         {
-            // NOTE(Peacock): The bit order on disk does not repersent the bit order when loaded into memory...
+            // NOTE(Peacock): The bit order on disk does not represent the bit order when loaded into memory...
             marieMem[memoryIndex++] = instr.word; //((instr.byte0 << 8) | (instr.byte1));
         }
         else

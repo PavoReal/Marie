@@ -114,6 +114,20 @@ main(int argc, char **argv)
             {
                 marie.regPC = marie.memory[marie.regIR.addr];
             } break;
+
+            default:
+            {
+                fprintf(stderr, "[MARIE] - Invalid instruction...\n<< %#X >>\n", marie.regIR.word);
+                printf("[MARIE] - Skip over (y or n) ?");
+
+                char skip;
+                scanf("%c", &skip);
+
+                if (skip == 'n')
+                {
+                    running = false;
+                }
+            } break;
         }
     }
 

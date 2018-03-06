@@ -16,8 +16,6 @@ using int16 = int16_t;
 using int32 = int32_t;
 using int64 = int64_t;
 
-#include "math.h"
-
 #pragma pack(push, 1)
 struct BinaryInstruction
 {
@@ -41,8 +39,8 @@ struct BinaryInstruction
         };
     };
 };
-
 #pragma pack(pop)
+
 struct Marie
 {
     // Accumulator register
