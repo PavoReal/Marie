@@ -158,7 +158,7 @@ main(int argc, char **argv)
         if (validInstr)
         {
             // NOTE(Peacock): The bit order on disk does not represent the bit order when loaded into memory...
-            marieMem[memoryIndex++] = instr.word; //((instr.byte0 << 8) | (instr.byte1));
+            marieMem[memoryIndex++] = instr.word; // ((instr.byte0 << 8) | (instr.byte1));
         }
         else
         {
