@@ -2,8 +2,8 @@
 
 pushd data/ > /dev/null
 
-./marie-vm test.mar output.txt
-
-cat output.txt | less
+./marie-asm test.mar
+./marie-exe a.marie
 
 popd > /dev/null
+
