@@ -22,15 +22,15 @@ MakeSrcInstruction(uint8 opCode, const char *name)
 
 const SrcInstruction SRC_INSTRUCTIONS[] =
 {
-    MakeSrcInstruction({0x1}, "Load"),
-    MakeSrcInstruction({0x2}, "Store"),
-    MakeSrcInstruction({0x3}, "Add"),
-    MakeSrcInstruction({0x4}, "Subt"),
-    MakeSrcInstruction({0x5}, "Input"),
-    MakeSrcInstruction({0x6}, "Output"),
-    MakeSrcInstruction({0x7}, "Halt"),
-    MakeSrcInstruction({0x8}, "Skipcond"),
-    MakeSrcInstruction({0x9}, "Jump"),
+    MakeSrcInstruction(0x1, "Load"),
+    MakeSrcInstruction(0x2, "Store"),
+    MakeSrcInstruction(0x3, "Add"),
+    MakeSrcInstruction(0x4, "Subt"),
+    MakeSrcInstruction(0x5, "Input"),
+    MakeSrcInstruction(0x6, "Output"),
+    MakeSrcInstruction(0x7, "Halt"),
+    MakeSrcInstruction(0x8, "Skipcond"),
+    MakeSrcInstruction(0x9, "Jump"),
 };
 
 INTERNAL bool
