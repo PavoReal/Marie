@@ -6,6 +6,19 @@
     #define stricmp strcasecmp
 #endif
 
+inline size_t
+StringLength(const char *str)
+{
+    size_t result = 0;
+
+    while (*str++)
+    {
+        ++result;
+    }
+
+    return result;
+}
+
 inline void
 StripCharFromString(char *str, char c)
 {
@@ -55,25 +68,21 @@ StringContains(char *str, char c)
 
 template <typename T>
 T
-DecCharsToNum(char *str, size_t length)
+CharsToNum(char *str, int base)
 {
     T result = {};
 
-	while (length--)
-	{
-		result = result * 10 + (*str++ - '0');
-	}
+    result = static_cast<T>(strtol(str, 0, base));
 
     return result;
 }
 
-template <typename T>
-T
-HexCharsToNum(char *str)
+inline void
+RemoveStartingSpaces(char **str)
 {
-    T result = {};
-
-    result = static_cast<T>(strtol(str, 0, 16));
-
-    return result;
+    while ((**str == ' ') || (**str == '\t'))
+    {
+        ++*str;
+    }
 }
+

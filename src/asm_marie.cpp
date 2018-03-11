@@ -1,3 +1,4 @@
+
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
@@ -16,7 +17,7 @@ MakeSrcInstruction(uint8 opCode, const char *name)
 {
     SrcInstruction instr = {};
 
-    instr.name = static_cast<char*>(malloc(strlen(name) + 1));
+    instr.name = static_cast<char*>(malloc(StringLength(name) + 1));
     strcpy(instr.name, name);
 
     instr.opCode = opCode;
@@ -53,64 +54,84 @@ GetInstructionFromString(BinaryInstruction *instr, SymbolList *symbols, char *sr
     uint8 opCode = {};
     uint16 addr  = {};
 
-    size_t srcLength = strlen(src);
-    while ((*src == ' ' || *src == '\t') && srcLength)
-    {
-        ++src;
-        --srcLength;
-    }
+    // Remove any tabs or spaces at the start of the line
+    RemoveStartingSpaces(&src);
 
+    size_t srcLength = StringLength(src);
     if (!srcLength)
     {
+        // If the line is empty we'll skip it
         result = LineResult::SKIP;
     }
     else
     {
+        // If the line has a label, ignore it
+        // since we've already created the symbol table
+        // in the first pass
         if (StringContains(src, ','))
         {
             src += StringLengthTo(src, ',') + 1;
 
-            srcLength = strlen(src);
-            while ((*src == ' ' || *src == '\t') && srcLength)
-            {
-                ++src;
-                --srcLength;
-            }
+            // Make sure there arn't any spaces
+            RemoveStartingSpaces(&src);
         }
 
-        srcLength = strlen(src);
+        // Get the new line length and the length to the next space
+        // if they ARE the same, we don't have an address with the opcode
+        // if they ARE NOT the same, we do have an address with the opcode
+        srcLength = StringLength(src);
         size_t lengthToSpace = StringLengthTo(src, ' ');
 
         char *addrString = nullptr;
 
         if (srcLength != lengthToSpace)
         {
+            // One past the space
             addrString = src + lengthToSpace + 1;
+
+            // Set the space to a nullterminator
+            // to seperate the opcode and address
             src[lengthToSpace] = '\0';
 
+            // Loop through the symbol table and look for a matching symbol
             for (uint32 i = 0; (i < symbols->count) && (!addr); ++i)
             {
                 Symbol *symbol = PeakAt(symbols, i);
 
+                // case sensitive
                 if (strcmp(symbol->name, addrString) == 0)
                 {
                     addr = symbol->addr;
                 }
             }
 
+            // If we didn't find a symbol, assume the address string is a constant
             if (!addr)
             {
-                if (tolower(*addrString) == 'x')
+                int base = 10;
+
+                // If the constant has a prefix of "0x", "0X', "x" or "X", we treat it as a hex constant
+                if (tolower(*addrString) == 'x' ||
+                    ((*addrString == '0') && (tolower(*(addrString + 1)) == 'x')))
                 {
-                    addr = HexCharsToNum<uint16>(addrString + 1);
+                    base = 16;
+
+                    if (*addrString == '0')
+                    {
+                        addrString += 2;
+                    }
+                    else
+                    {
+                        addrString += 1;
+                    }
                 }
-                else
-                {
-                    addr = DecCharsToNum<uint16>(addrString, strlen(addrString));
-                }
+                
+                // We have our address
+                addr = CharsToNum<uint16>(addrString, base);
             }
         }
 
+        // Lookup the opcode
         for (const SrcInstruction &str : SRC_INSTRUCTIONS)
         {
             if (stricmp(src, str.name) == 0)
@@ -123,6 +144,7 @@ GetInstructionFromString(BinaryInstruction *instr, SymbolList *symbols, char *sr
             }
         }
 
+        // If we didn't find the opcode, it could still be a DEC or HEX constant
         if (result != LineResult::VALID)
         {
             if (stricmp(src, "DEC") == 0)
@@ -132,7 +154,7 @@ GetInstructionFromString(BinaryInstruction *instr, SymbolList *symbols, char *sr
             }
             else if (stricmp(src, "HEX") == 0)
             {
-                instr->word = HexCharsToNum<uint16>(addrString);
+                instr->word = CharsToNum<uint16>(addrString, 16);
                 result = LineResult::VALID;
             }
         }
@@ -151,15 +173,12 @@ GetSymbolFromLine(Symbol *symbol, char *line, uint32 lineNum)
 {
     LineResult result = LineResult::ERROR;
 
-    size_t srcLength = strlen(line);
-    while ((*line == ' ' || *line == '\t') && srcLength)
-    {
-        ++line;
-        --srcLength;
-    }
+    RemoveStartingSpaces(&line);
 
+    size_t srcLength = StringLength(line);
     if (!srcLength)
     {
+        // Empty line
         result = LineResult::SKIP;
     }
     else
@@ -170,13 +189,13 @@ GetSymbolFromLine(Symbol *symbol, char *line, uint32 lineNum)
             ++read;
         }
 
-        size_t lineLength = strlen(line);
+        size_t lineLength = StringLength(line);
         size_t delta = read - line;
 
         if (delta != lineLength)
         {
             *read = '\0';
-            symbol->name = static_cast<char*>(malloc(strlen(line) + 1));
+            symbol->name = static_cast<char*>(malloc(StringLength(line) + 1));
             strcpy(symbol->name, line);
             symbol->addr = lineNum;
 

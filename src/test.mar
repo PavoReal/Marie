@@ -7,11 +7,11 @@ PROD,   Dec 0
 
 Start,  Input
     Store A
-    Skipcond x800
+    Skipcond 0x800
     Jump Final
     Input
     Store B
-    Skipcond x800
+    Skipcond 0x800
     Jump Final
 
 Loop,   Load A
@@ -20,7 +20,7 @@ Loop,   Load A
     Load B
     Subt ONE
     Store B
-    Skipcond x400
+    Skipcond 0x400
     Jump Loop
     Load PROD
 
