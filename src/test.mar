@@ -1,7 +1,33 @@
-Start,
+Jump Start
+
+A,  Dec 0
+B,  Dec 0
+ONE,    Dec 1
+PROD,   Dec 0
+
+Start,  Input
+    Store A
+    Skipcond x800
+    Jump Final
     Input
-    Store 0
-    Input
-    Subt 0
-    Output
-Halt
+    Store B
+    Skipcond x800
+    Jump Final
+
+Loop,   Load A
+    Add PROD
+    Store PROD
+    Load B
+    Subt ONE
+    Store B
+    Skipcond x400
+    Jump Loop
+    Load PROD
+
+Final,  Output
+    Clear
+    Store A
+    Store B
+    Store PROD
+    Halt
+

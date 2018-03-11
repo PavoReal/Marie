@@ -75,3 +75,10 @@ struct SrcInstruction
     char *name;
 };
 
+struct Symbol
+{
+    char *name;
+
+    uint16 addr;
+};
+

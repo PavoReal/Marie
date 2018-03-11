@@ -35,6 +35,24 @@ StringLengthTo(char *str, char stop)
 	return result;
 }
 
+inline bool
+StringContains(char *str, char c)
+{
+    bool contains = false;
+
+    while (*str && !contains)
+    {
+        if (*str == c)
+        {
+            contains = true;
+        }
+
+        ++str;
+    }
+
+    return contains;
+}
+
 template <typename T>
 T
 DecCharsToNum(char *str, size_t length)

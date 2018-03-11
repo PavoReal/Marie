@@ -14,7 +14,7 @@ main(int argc, char **argv)
 
     if (argc >= 2)
     {
-        inputFile = fopen(argv[1], "r");
+        inputFile = fopen(argv[1], "rb");
     }
     else
     {
@@ -112,7 +112,12 @@ main(int argc, char **argv)
 
             case 0x9:
             {
-                marie.regPC = marie.memory[marie.regIR.addr];
+                marie.regPC = marie.regIR.addr;
+            } break;
+
+            case 0xA:
+            {
+                marie.regAC = 0;
             } break;
 
             default:

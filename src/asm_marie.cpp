@@ -1,9 +1,13 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <cctype>
 
 #include "marie.h"
 #include "strings.h"
+#include "list.h"
+
+using SymbolList = TList<Symbol>;
 
 #define OUTPUT_FILE_DEFAULT "a.marie"
 
@@ -31,66 +35,156 @@ const SrcInstruction SRC_INSTRUCTIONS[] =
     MakeSrcInstruction(0x7, "Halt"),
     MakeSrcInstruction(0x8, "Skipcond"),
     MakeSrcInstruction(0x9, "Jump"),
+    MakeSrcInstruction(0xA, "Clear")
 };
 
-INTERNAL bool
-GetInstructionFromString(BinaryInstruction *result, char *src)
+enum class LineResult
 {
-    bool valid = false;
+    VALID,
+    ERROR,
+    SKIP
+};
+
+INTERNAL LineResult
+GetInstructionFromString(BinaryInstruction *instr, SymbolList *symbols, char *src)
+{
+    LineResult result = LineResult::ERROR;
 
     uint8 opCode = {};
     uint16 addr  = {};
 
-    while (*src == ' ')
+    size_t srcLength = strlen(src);
+    while ((*src == ' ' || *src == '\t') && srcLength)
     {
         ++src;
+        --srcLength;
     }
 
-    size_t srcLength = strlen(src);
-    size_t lengthToSpace = StringLengthTo(src, ' ');
-
-    char *addrString = nullptr;
-
-    if (srcLength != lengthToSpace)
+    if (!srcLength)
     {
-        addrString = src + lengthToSpace + 1;
-        src[lengthToSpace] = '\0';
-
-        addr = DecCharsToNum<uint16>(addrString, strlen(addrString));
-    }
-
-    for (const SrcInstruction &instr : SRC_INSTRUCTIONS)
-    {
-        if (stricmp(src, instr.name) == 0)
-        {
-            opCode = instr.opCode;
-
-            valid = true;
-
-            break;
-        }
-    }
-
-    if (!valid)
-    {
-        if (stricmp(src, "DEC") == 0)
-        {
-            result->word = addr;
-            valid = true;
-        }
-        else if (stricmp(src, "HEX") == 0)
-        {
-            result->word = HexCharsToNum<uint16>(addrString);
-            valid = true;
-        }
+        result = LineResult::SKIP;
     }
     else
     {
-        result->opCode = opCode;
-        result->addr = addr;
+        if (StringContains(src, ','))
+        {
+            src += StringLengthTo(src, ',') + 1;
+
+            srcLength = strlen(src);
+            while ((*src == ' ' || *src == '\t') && srcLength)
+            {
+                ++src;
+                --srcLength;
+            }
+        }
+
+        srcLength = strlen(src);
+        size_t lengthToSpace = StringLengthTo(src, ' ');
+
+        char *addrString = nullptr;
+
+        if (srcLength != lengthToSpace)
+        {
+            addrString = src + lengthToSpace + 1;
+            src[lengthToSpace] = '\0';
+
+            for (uint32 i = 0; (i < symbols->count) && (!addr); ++i)
+            {
+                Symbol *symbol = At(symbols, i);
+
+                if (strcmp(symbol->name, addrString) == 0)
+                {
+                    addr = symbol->addr;
+                }
+            }
+
+            if (!addr)
+            {
+                if (tolower(*addrString) == 'x')
+                {
+                    addr = HexCharsToNum<uint16>(addrString + 1);
+                }
+                else
+                {
+                    addr = DecCharsToNum<uint16>(addrString, strlen(addrString));
+                }
+            }
+        }
+
+        for (const SrcInstruction &instr : SRC_INSTRUCTIONS)
+        {
+            if (stricmp(src, instr.name) == 0)
+            {
+                opCode = instr.opCode;
+
+                result = LineResult::VALID;
+
+                break;
+            }
+        }
+
+        if (result != LineResult::VALID)
+        {
+            if (stricmp(src, "DEC") == 0)
+            {
+                instr->word = addr;
+                result = LineResult::VALID;
+            }
+            else if (stricmp(src, "HEX") == 0)
+            {
+                instr->word = HexCharsToNum<uint16>(addrString);
+                result = LineResult::VALID;
+            }
+        }
+        else
+        {
+            instr->opCode = opCode;
+            instr->addr = addr;
+        }
     }
 
-    return valid;
+    return result;
+}
+
+INTERNAL LineResult
+GetSymbolFromLine(Symbol *symbol, char *line, uint32 lineNum)
+{
+    LineResult result = LineResult::ERROR;
+
+    size_t srcLength = strlen(line);
+    while ((*line == ' ' || *line == '\t') && srcLength)
+    {
+        ++line;
+        --srcLength;
+    }
+
+    if (!srcLength)
+    {
+        result = LineResult::SKIP;
+    }
+    else
+    {
+        char *read = line;
+        while (*read && *read != ',')
+        {
+            ++read;
+        }
+
+        size_t lineLength = strlen(line);
+        size_t delta = read - line;
+
+        if (delta != lineLength)
+        {
+            *read = '\0';
+            symbol->name = static_cast<char*>(malloc(strlen(line) + 1));
+            strcpy(symbol->name, line);
+            symbol->addr = lineNum;
+
+            result = LineResult::VALID;
+        }
+    }
+
+    return result;
 }
 
 int
@@ -105,7 +199,7 @@ main(int argc, char **argv)
 
         if (argc >= 3)
         {
-            outputFile = fopen(argv[2], "w");
+            outputFile = fopen(argv[2], "wb");
         }
 
         if (!inputFile)
@@ -140,27 +234,58 @@ main(int argc, char **argv)
 
     uint16 *marieMem = static_cast<uint16*>(calloc(sizeof(uint16), 4096));
 
+    fpos_t inputFileStartPos = {};
+    fgetpos(inputFile, &inputFileStartPos);
+
     const size_t INPUT_BUFFER_SIZE = 64;
-    char *inputBuffer = static_cast<char*>(calloc(1, INPUT_BUFFER_SIZE));
+    char inputBuffer[INPUT_BUFFER_SIZE];
 
+    //
     fgets(inputBuffer, INPUT_BUFFER_SIZE, inputFile);
+    // Pass 1 - Symbol table
 
+    uint32 line = 0;
+    SymbolList symbols = {};
+    while (!feof(inputFile))
+    {
+        StripCharFromString(inputBuffer, '\n');
+
+        Symbol symbol = {};
+        LineResult valid = GetSymbolFromLine(&symbol, inputBuffer, line);
+
+        if (valid == LineResult::VALID)
+        {
+            Push(&symbols, symbol);
+        }
+
+        fgets(inputBuffer, INPUT_BUFFER_SIZE, inputFile);
+
+        if (valid != LineResult::SKIP)
+        {
+            ++line;
+        }
+    }
+
+    //
+    fsetpos(inputFile, &inputFileStartPos);
+    fgets(inputBuffer, INPUT_BUFFER_SIZE, inputFile);
+    // Pass 2 
+
+    line = 1;
     size_t memoryIndex = 0;
-    uint32 line = 1;
     while (!feof(inputFile) && memoryIndex < 4096)
     {
         StripCharFromString(inputBuffer, '\n');
-        StripCharFromString(inputBuffer, '\t');
 
         BinaryInstruction instr = {};
-        bool validInstr = GetInstructionFromString(&instr, inputBuffer);
+        LineResult lineResult = GetInstructionFromString(&instr, &symbols, inputBuffer);
 
-        if (validInstr)
+        if (lineResult == LineResult::VALID)
         {
-            // NOTE(Peacock): The bit order on disk does not represent the bit order when loaded into memory...
+            // NOTE(Peacock): Should we make sure the bit order on disk is what we expect?
             marieMem[memoryIndex++] = instr.word; // ((instr.byte0 << 8) | (instr.byte1));
         }
-        else
+        else if (lineResult == LineResult::ERROR)
         {
             fprintf(stderr, "Error: Invalid instruction on line %d...\n<< %s >>\nAborting...\n", line, inputBuffer);
 
@@ -171,7 +296,11 @@ main(int argc, char **argv)
         fgets(inputBuffer, INPUT_BUFFER_SIZE, inputFile);
     }
 
-    free(inputBuffer);
+    while (symbols.count)
+    {
+        Pop(&symbols);
+    }
+
     fclose(inputFile);
 
     fwrite(marieMem, sizeof(uint16), 4096, outputFile);
