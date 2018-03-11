@@ -90,7 +90,7 @@ GetInstructionFromString(BinaryInstruction *instr, SymbolList *symbols, char *sr
 
             for (uint32 i = 0; (i < symbols->count) && (!addr); ++i)
             {
-                Symbol *symbol = At(symbols, i);
+                Symbol *symbol = PeakAt(symbols, i);
 
                 if (strcmp(symbol->name, addrString) == 0)
                 {
@@ -111,11 +111,11 @@ GetInstructionFromString(BinaryInstruction *instr, SymbolList *symbols, char *sr
             }
         }
 
-        for (const SrcInstruction &instr : SRC_INSTRUCTIONS)
+        for (const SrcInstruction &str : SRC_INSTRUCTIONS)
         {
-            if (stricmp(src, instr.name) == 0)
+            if (stricmp(src, str.name) == 0)
             {
-                opCode = instr.opCode;
+                opCode = str.opCode;
 
                 result = LineResult::VALID;
 
@@ -296,10 +296,7 @@ main(int argc, char **argv)
         fgets(inputBuffer, INPUT_BUFFER_SIZE, inputFile);
     }
 
-    while (symbols.count)
-    {
-        Pop(&symbols);
-    }
+    Free(&symbols);
 
     fclose(inputFile);
 

@@ -45,7 +45,7 @@ Pop(TList<T> *list)
 
 template <typename T>
 inline T*
-At(TList<T> *list, uint32 index)
+PeakAt(TList<T> *list, uint32 index)
 {
     auto current = list->head;
     for (uint32 i = 0; i < index; ++i)
@@ -54,5 +54,15 @@ At(TList<T> *list, uint32 index)
     }
 
     return &current->data;
+}
+
+template <typename T>
+inline void
+Free(TList<T> *list)
+{
+    while (list->count)
+    {
+        Pop(list);
+    }
 }
 
