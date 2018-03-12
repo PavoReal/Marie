@@ -1,11 +1,12 @@
-Jump Start
+JnS Start
 
 A,  Dec 0
 B,  Dec 0
 ONE,    Dec 1
 PROD,   Dec 0
 
-Start,  Input
+Start, Hex 0
+    Input
     Store A
     Skipcond 0x800
     Jump Final

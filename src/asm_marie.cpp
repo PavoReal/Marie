@@ -27,6 +27,7 @@ MakeSrcInstruction(uint8 opCode, const char *name)
 
 const SrcInstruction SRC_INSTRUCTIONS[] =
 {
+    MakeSrcInstruction(0x0, "JnS"),
     MakeSrcInstruction(0x1, "Load"),
     MakeSrcInstruction(0x2, "Store"),
     MakeSrcInstruction(0x3, "Add"),
@@ -36,7 +37,11 @@ const SrcInstruction SRC_INSTRUCTIONS[] =
     MakeSrcInstruction(0x7, "Halt"),
     MakeSrcInstruction(0x8, "Skipcond"),
     MakeSrcInstruction(0x9, "Jump"),
-    MakeSrcInstruction(0xA, "Clear")
+    MakeSrcInstruction(0xA, "Clear"),
+    MakeSrcInstruction(0xB, "AddI"),
+    MakeSrcInstruction(0xC, "JumpI"),
+    MakeSrcInstruction(0xD, "LoadI"),
+    MakeSrcInstruction(0xE, "StoreI"),
 };
 
 enum class LineResult
@@ -134,7 +139,7 @@ GetInstructionFromString(BinaryInstruction *instr, SymbolList *symbols, char *sr
         // Lookup the opcode
         for (const SrcInstruction &str : SRC_INSTRUCTIONS)
         {
-            if (stricmp(src, str.name) == 0)
+            if (strcmp(src, str.name) == 0)
             {
                 opCode = str.opCode;
 
