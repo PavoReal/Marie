@@ -44,6 +44,12 @@ main(int argc, char **argv)
             //
             // Jns x
             // 
+            // MAR      <-- x
+            // MBR      <-- PC + 1
+            // MEM[MAR] <-- MBR
+            // AC       <-- x + 1
+            // PC       <-- AC
+            // 
             case 0x0:
             {
                 marie.regMAR = marie.regIR.addr;
@@ -57,15 +63,23 @@ main(int argc, char **argv)
             //
             // Load x
             //
+            // MAR <-- x
+            // MBR <-- MEM[MAR]
+            // AC  <-- MBR
+            //
             case 0x1:
             {
                 marie.regMAR = marie.regIR.addr;
                 marie.regMBR = marie.memory[marie.regMAR];
-                marie.regAC = marie.regMBR;
+                marie.regAC  = marie.regMBR;
             } break;
 
             //
             // Store x
+            //
+            // MAR      <-- x
+            // MBR      <-- AC
+            // MEM[MAR] <-- MBR
             //
             case 0x2:
             {
@@ -77,25 +91,36 @@ main(int argc, char **argv)
             //
             // Add x
             //
+            // MAR <-- x
+            // MBR <-- MEM[MAR]
+            // AC  <-- AC + MBR
+            //
             case 0x3:
             {
                 marie.regMAR = marie.regIR.addr;
                 marie.regMBR = marie.memory[marie.regMAR];
-                marie.regAC = marie.regAC + marie.regMBR;
+                marie.regAC  = marie.regAC + marie.regMBR;
             } break;
 
             //
             // Subt x
             //
+            // MAR <-- x
+            // MBR <-- MEM[MAR]
+            // AC  <-- AC - MBR
+            //
             case 0x4:
             {
                 marie.regMAR = marie.regIR.addr;
                 marie.regMBR = marie.memory[marie.regMAR];
-                marie.regAC = marie.regAC - marie.regMBR;
+                marie.regAC  = marie.regAC - marie.regMBR;
             } break;
 
             //
             // Input
+            //
+            // IN <-- (stdin)
+            // AC <-- IN
             //
             case 0x5:
             {
@@ -110,6 +135,9 @@ main(int argc, char **argv)
 
             //
             // Output
+            //
+            // OUT      <-- AC
+            // (stdout) <-- OUT
             //
             case 0x6:
             {
@@ -127,6 +155,13 @@ main(int argc, char **argv)
 
             //
             // Skipcond x
+            //
+            // If      IR[11 - 10] = 00 then
+            //     If AC < 0 then PC <-- PC + 1
+            // else If IR[11 - 10] = 01 then
+            //     If AC = 0 then PC <-- PC + 1
+            // else If IR[11 - 10] = 10 then
+            //     if AC > 0 then PC <-- PC + 1
             //
             case 0x8:
             {
@@ -156,6 +191,8 @@ main(int argc, char **argv)
             //
             // Jump x
             //
+            // PC <-- x
+            //
             case 0x9:
             {
                 marie.regPC = marie.regIR.addr;
@@ -163,6 +200,8 @@ main(int argc, char **argv)
 
             //
             // Clear
+            //
+            // AC <-- 0
             //
             case 0xA:
             {
@@ -172,27 +211,46 @@ main(int argc, char **argv)
             //
             // AddI x
             //
+            // MAR <-- x
+            // MBR <-- MEM[MAR]
+            // MAR <-- MBR
+            // MBR <-- MEM[MAR]
+            // AC  <-- AC + MBR
+            //
             case 0xB:
             {
                 marie.regMAR = marie.regIR.addr;
                 marie.regMBR = marie.memory[marie.regMAR];
                 marie.regMAR = marie.regMBR;
                 marie.regMBR = marie.memory[marie.regMAR];
-                marie.regAC = marie.regAC + marie.regMBR;
+                marie.regAC  = marie.regAC + marie.regMBR;
             } break;
 
             //
             // JumpI x
+            //
+            // MAR <-- x
+            // MBR <-- MEM[MAR]
+            // MAR <-- MBR
+            // MBR <-- MEM[MAR]
+            // PC  <-- MBR
             //
             case 0xC:
             {
                 marie.regMAR = marie.regIR.addr;
                 marie.regMBR = marie.memory[marie.regMAR];
                 marie.regMAR = marie.regMBR;
+                marie.regMBR = marie.memory[marie.regMAR];
             } break;
 
             //
             // LoadI x
+            //
+            // MAR <-- x
+            // MBR <-- MEM[MAR]
+            // MAR <-- MBR
+            // MBR <-- MEM[MAR]
+            // AC  <-- MBR
             //
             case 0xD:
             {
@@ -200,11 +258,17 @@ main(int argc, char **argv)
                 marie.regMBR = marie.memory[marie.regMAR];
                 marie.regMAR = marie.regMBR;
                 marie.regMBR = marie.memory[marie.regMAR];
-                marie.regAC = marie.regMBR;
+                marie.regAC  = marie.regMBR;
             } break;
 
             //
             // StoreI x
+            //
+            // MAR      <-- x
+            // MBR      <-- MEM[MAR]
+            // MAR      <-- MBR
+            // MBR      <-- AC
+            // MEM[MAR] <-- MBR
             //
             case 0xE:
             {
@@ -213,7 +277,6 @@ main(int argc, char **argv)
                 marie.regMAR = marie.regMBR;
                 marie.regMBR = marie.regAC;
                 marie.memory[marie.regMAR] = marie.regMBR;
-
             } break;
 
             default:
