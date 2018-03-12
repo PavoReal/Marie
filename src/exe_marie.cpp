@@ -49,16 +49,17 @@ main(int argc, char **argv)
     while (running)
     {
         bool step = false;
-        char cmd;
+
+        const size_t CMD_BUFFER_SIZE = 32;
+        char cmd[CMD_BUFFER_SIZE];
 
         if (stepping)
         {
             printf("[MARIE] PC: %#X - %#X\n", marie.regPC, marie.memory[marie.regPC]);
             printf("[MARIE] cmd? ");
-            scanf(" %c", &cmd);
-            putc('\n', stdout);
+            fgets(cmd, CMD_BUFFER_SIZE, stdin);
 
-            switch (tolower(cmd))
+            switch (tolower(*cmd))
             {
                 case 'r':
                     stepping = false;
@@ -78,14 +79,14 @@ main(int argc, char **argv)
 
                 case 'm':
                 {
-                    for (int i = marie.regPC - 5; i < marie.regPC; ++i)
+                    for (unsigned i = marie.regPC - 5; i < marie.regPC; ++i)
                     {
                         printf("%#X - %#X\n", i, marie.memory[i]);
                     }
 
                     printf("<<%#X>> - %#X\n", marie.regPC, marie.memory[marie.regPC]);
 
-                    for (int i = marie.regPC + 1; i < marie.regPC + 6; ++i)
+                    for (unsigned i = marie.regPC + 1; i < marie.regPC + 6; ++i)
                     {
                         printf("%#X - %#X\n", i, marie.memory[i]);
                     }
@@ -212,7 +213,7 @@ main(int argc, char **argv)
                 //
                 case 0x6:
                 {
-                    marie.regOUT = marie.regAC;
+                    marie.regOUT = static_cast<int8>(marie.regAC);
                     printf("%d\n", marie.regOUT);
                 } break;
 
