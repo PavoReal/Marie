@@ -80,14 +80,14 @@ main(int argc, char **argv)
 
                 case 'm':
                 {
-                    for (unsigned i = marie.regPC - 5; i < marie.regPC; ++i)
+                    for (int i = marie.regPC - 5; i < marie.regPC; ++i)
                     {
                         printf("%#X - %#X\n", i, marie.memory[i]);
                     }
 
                     printf("<<%#X>> - %#X\n", marie.regPC, marie.memory[marie.regPC]);
 
-                    for (unsigned i = marie.regPC + 1; i < marie.regPC + 6; ++i)
+                    for (int i = marie.regPC + 1; i < marie.regPC + 6; ++i)
                     {
                         printf("%#X - %#X\n", i, marie.memory[i]);
                     }
