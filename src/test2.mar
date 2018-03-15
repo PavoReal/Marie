@@ -1,0 +1,41 @@
+Jump Start
+
+ONE,  Dec 1
+
+a,    Dec 0
+b,    Dec 0
+
+prod, Dec 0
+
+Start, Input
+       Store a
+       Input
+       Store b
+       Subt a
+       Skipcond 0x000
+       Jump Del
+       Jump Final
+
+Del, Skipcond 0x800
+     Jump Div
+
+Mul, Load a
+     Add prod
+     Store prod
+     Load b
+     Subt ONE
+     Store b
+     Skipcond 0x400
+     Jump Mul
+     Load prod
+     Jump Out
+
+Div, Load A
+
+Out, Output
+
+Final, Clear
+       Store A
+       Store B
+       Halt
+

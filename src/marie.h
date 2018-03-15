@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #define INTERNAL static
-#define GLOBAL static
+#define GLOBAL   static
 
 using uint   = unsigned int;
 using uint8  = uint8_t;

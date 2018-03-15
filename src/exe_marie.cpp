@@ -1,3 +1,4 @@
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -12,13 +13,13 @@ INTERNAL void
 RegisterDump(Marie *marie)
 {
     printf("[MARIE] - Register Dump:\n");
-    printf("[MARIE] - Register AC  - %#X\n", marie->regAC);
-    printf("[MARIE] - Register MAR - %#X\n", marie->regMAR);
-    printf("[MARIE] - Register MBR - %#X\n", marie->regMBR);
-    printf("[MARIE] - Register PC  - %#X\n", marie->regPC);
-    printf("[MARIE] - Register IR  - %#X\n", marie->regIR.word);
-    printf("[MARIE] - Register IN  - %#X\n", marie->regIN);
-    printf("[MARIE] - Register OUT - %#X\n", marie->regOUT);
+    printf("[MARIE] - AC  - %#X\n", marie->regAC);
+    printf("[MARIE] - MAR - %#X\n", marie->regMAR);
+    printf("[MARIE] - MBR - %#X\n", marie->regMBR);
+    printf("[MARIE] - PC  - %#X\n", marie->regPC);
+    printf("[MARIE] - IR  - %#X\n", marie->regIR.word);
+    printf("[MARIE] - IN  - %#X\n", marie->regIN);
+    printf("[MARIE] - OUT - %#X\n", marie->regOUT);
 }
 
 int
@@ -117,7 +118,7 @@ main(int argc, char **argv)
                 // Jns x
                 // 
                 // MAR      <-- x
-                // MBR      <-- PC + 1
+                // MBR      <-- PC 
                 // MEM[MAR] <-- MBR
                 // AC       <-- x + 1
                 // PC       <-- AC
@@ -125,11 +126,10 @@ main(int argc, char **argv)
                 case 0x0:
                 {
                     marie.regMAR = marie.regIR.addr;
-                    marie.regMBR = marie.regPC + 1;
+                    marie.regMBR = marie.regPC;
                     marie.memory[marie.regMAR] = marie.regMBR;
                     marie.regAC = marie.regIR.addr + 1;
                     marie.regPC = marie.regAC;
-
                 } break;
 
                 //
