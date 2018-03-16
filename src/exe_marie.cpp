@@ -82,14 +82,42 @@ main(int argc, char **argv)
                 {
                     for (int i = marie.regPC - 5; i < marie.regPC; ++i)
                     {
-                        printf("%#X - %#X\n", i, marie.memory[i]);
-                    }
+                        printf("[MARIE] %#X - %#X", i, marie.memory[i]);
 
-                    printf("<<%#X>> - %#X\n", marie.regPC, marie.memory[marie.regPC]);
+                        SrcInstruction *srcInstr = GetSrcMatchForBin(marie.memory[i]);
+
+                        if (srcInstr)
+                        {
+                            printf(" (%s)", srcInstr->name);
+                        }
+
+                        printf("\n");
+                    }
+                    {
+                        printf("[MARIE] <<%#X>> - %#X", marie.regPC, marie.memory[marie.regPC]);
+
+                        SrcInstruction *srcInstr = GetSrcMatchForBin(marie.memory[marie.regPC]);
+
+                        if (srcInstr)
+                        {
+                            printf(" (%s)", srcInstr->name);
+                        }
+
+                        printf("\n");
+                    }
 
                     for (int i = marie.regPC + 1; i < marie.regPC + 6; ++i)
                     {
-                        printf("%#X - %#X\n", i, marie.memory[i]);
+                        printf("[MARIE] %#X - %#X", i, marie.memory[i]);
+
+                        SrcInstruction *srcInstr = GetSrcMatchForBin(marie.memory[i]);
+
+                        if (srcInstr)
+                        {
+                            printf(" (%s)", srcInstr->name);
+                        }
+
+                        printf("\n");
                     }
                 } break;
 

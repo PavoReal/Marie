@@ -1,8 +1,8 @@
 #! /bin/bash
 
-pushd data/ > /dev/null
+pushd build/ > /dev/null
 
-./marie-asm test.mar
+./marie-asm test2.mar
 ./marie-exe a.marie
 
 popd > /dev/null

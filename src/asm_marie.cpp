@@ -5,44 +5,11 @@
 #include <cctype>
 
 #include "marie.h"
-#include "strings.h"
 #include "list.h"
 
 using SymbolList = TList<Symbol>;
 
 #define OUTPUT_FILE_DEFAULT "a.marie"
-
-INTERNAL SrcInstruction
-MakeSrcInstruction(uint8 opCode, const char *name)
-{
-    SrcInstruction instr = {};
-
-    instr.name = static_cast<char*>(malloc(StringLength(name) + 1));
-    strcpy(instr.name, name);
-
-    instr.opCode = opCode;
-
-    return instr;
-}
-
-const SrcInstruction SRC_INSTRUCTIONS[] =
-{
-    MakeSrcInstruction(0x0, "JnS"),
-    MakeSrcInstruction(0x1, "Load"),
-    MakeSrcInstruction(0x2, "Store"),
-    MakeSrcInstruction(0x3, "Add"),
-    MakeSrcInstruction(0x4, "Subt"),
-    MakeSrcInstruction(0x5, "Input"),
-    MakeSrcInstruction(0x6, "Output"),
-    MakeSrcInstruction(0x7, "Halt"),
-    MakeSrcInstruction(0x8, "Skipcond"),
-    MakeSrcInstruction(0x9, "Jump"),
-    MakeSrcInstruction(0xA, "Clear"),
-    MakeSrcInstruction(0xB, "AddI"),
-    MakeSrcInstruction(0xC, "JumpI"),
-    MakeSrcInstruction(0xD, "LoadI"),
-    MakeSrcInstruction(0xE, "StoreI"),
-};
 
 enum class LineResult
 {
