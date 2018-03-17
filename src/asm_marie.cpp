@@ -8,6 +8,10 @@
 // - Docs
 //
 
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif // _CRT_SECURE_NO_WARNINGS
+
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
@@ -103,7 +107,7 @@ GetInstructionFromString(AssemblerState *state, BinaryInstruction *instr, Symbol
                         addrString += 1;
                     }
                 }
-                
+               
                 // We have our address
                 addr = CharsToNum<uint16>(addrString, base);
             }
@@ -166,7 +170,7 @@ GetSymbolFromLine(Symbol *symbol, char *line, uint32 lineNum)
         }
 
         int lineLength = StringLength(line);
-        size_t delta = read - line;
+        int64 delta = read - line;
 
         if (delta != lineLength)
         {

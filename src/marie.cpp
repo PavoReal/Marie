@@ -1,3 +1,6 @@
+#include "marie.h"
+#include "math.h"
+#include "strings.h"
 
 //
 // https://en.wikipedia.org/wiki/Levenshtein_distance
