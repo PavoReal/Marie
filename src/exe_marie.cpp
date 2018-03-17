@@ -1,3 +1,13 @@
+//
+// TODO list
+// - Redo command interface
+// - Match with src file
+// - Modular
+// - Command line args?
+// - Documentation
+// - There's a bug with either memory or addition/subtraction
+//    - Sign error?
+//
 
 #include <cstdio>
 #include <cstdlib>
@@ -56,6 +66,9 @@ main(int argc, char **argv)
 
         if (stepping)
         {
+            // 
+            // TODO(Peacock): This command interface is trash, redo it
+            //
             printf("[MARIE] PC: %#X - %#X\n", marie.regPC, marie.memory[marie.regPC]);
             printf("[MARIE] cmd? ");
             fgets(cmd, CMD_BUFFER_SIZE, stdin);

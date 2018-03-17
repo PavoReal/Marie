@@ -6,10 +6,10 @@
     #define stricmp strcasecmp
 #endif
 
-inline size_t
+inline int
 StringLength(const char *str)
 {
-    size_t result = 0;
+    int result = 0;
 
     while (*str++)
     {
@@ -35,10 +35,10 @@ StripCharFromString(char *str, char c)
     *write = '\0';
 }
 
-inline size_t
+inline int
 StringLengthTo(char *str, char stop)
 {
-	size_t result = 0;
+	int result = 0;
 
 	while ((*str) && (*str++ != stop))
 	{

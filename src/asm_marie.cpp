@@ -1,58 +1,31 @@
+//
+// TODO List
+// - argv options for debug info
+// - Put the src file into the output file for the vm
+//    - Or just a reference to it?
+// - Think through both the symbol pass and assembly pass
+//    - Seems like lots of redundant code
+// - Docs
+//
 
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <cctype>
 
-#include "marie.h"
+#include "asm_marie.h"
 #include "strings.h"
 #include "list.h"
+#include "math.h"
 
 using SymbolList = TList<Symbol>;
 
 #define OUTPUT_FILE_DEFAULT "a.marie"
 
-INTERNAL SrcInstruction
-MakeSrcInstruction(uint8 opCode, const char *name)
-{
-    SrcInstruction instr = {};
-
-    instr.name = static_cast<char*>(malloc(StringLength(name) + 1));
-    strcpy(instr.name, name);
-
-    instr.opCode = opCode;
-
-    return instr;
-}
-
-const SrcInstruction SRC_INSTRUCTIONS[] =
-{
-    MakeSrcInstruction(0x0, "JnS"),
-    MakeSrcInstruction(0x1, "Load"),
-    MakeSrcInstruction(0x2, "Store"),
-    MakeSrcInstruction(0x3, "Add"),
-    MakeSrcInstruction(0x4, "Subt"),
-    MakeSrcInstruction(0x5, "Input"),
-    MakeSrcInstruction(0x6, "Output"),
-    MakeSrcInstruction(0x7, "Halt"),
-    MakeSrcInstruction(0x8, "Skipcond"),
-    MakeSrcInstruction(0x9, "Jump"),
-    MakeSrcInstruction(0xA, "Clear"),
-    MakeSrcInstruction(0xB, "AddI"),
-    MakeSrcInstruction(0xC, "JumpI"),
-    MakeSrcInstruction(0xD, "LoadI"),
-    MakeSrcInstruction(0xE, "StoreI"),
-};
-
-enum class LineResult
-{
-    VALID,
-    ERROR,
-    SKIP
-};
+#include "marie.cpp"
 
 INTERNAL LineResult
-GetInstructionFromString(BinaryInstruction *instr, SymbolList *symbols, char *src)
+GetInstructionFromString(AssemblerState *state, BinaryInstruction *instr, SymbolList *symbols, char *src)
 {
     LineResult result = LineResult::ERROR;
 
@@ -62,7 +35,7 @@ GetInstructionFromString(BinaryInstruction *instr, SymbolList *symbols, char *sr
     // Remove any tabs or spaces at the start of the line
     RemoveStartingSpaces(&src);
 
-    size_t srcLength = StringLength(src);
+    int srcLength = StringLength(src);
     if (!srcLength)
     {
         // If the line is empty we'll skip it
@@ -85,7 +58,7 @@ GetInstructionFromString(BinaryInstruction *instr, SymbolList *symbols, char *sr
         // if they ARE the same, we don't have an address with the opcode
         // if they ARE NOT the same, we do have an address with the opcode
         srcLength = StringLength(src);
-        size_t lengthToSpace = StringLengthTo(src, ' ');
+        int lengthToSpace = StringLengthTo(src, ' ');
 
         char *addrString = nullptr;
 
@@ -137,16 +110,14 @@ GetInstructionFromString(BinaryInstruction *instr, SymbolList *symbols, char *sr
         }
 
         // Lookup the opcode
-        for (const SrcInstruction &str : SRC_INSTRUCTIONS)
+        MatchResult match = GetBestSrcInstrMatch(state->srcInstructions, state->srcInstructionCount, src);
+
+        if (match.weight == 0)
         {
-            if (strcmp(src, str.name) == 0)
-            {
-                opCode = str.opCode;
+            SrcInstruction *s = static_cast<SrcInstruction*>(match.match);
 
-                result = LineResult::VALID;
-
-                break;
-            }
+            opCode = s->opCode;
+            result = LineResult::VALID;
         }
 
         // If we didn't find the opcode, it could still be a DEC or HEX constant
@@ -180,7 +151,7 @@ GetSymbolFromLine(Symbol *symbol, char *line, uint32 lineNum)
 
     RemoveStartingSpaces(&line);
 
-    size_t srcLength = StringLength(line);
+    int srcLength = StringLength(line);
     if (!srcLength)
     {
         // Empty line
@@ -194,7 +165,7 @@ GetSymbolFromLine(Symbol *symbol, char *line, uint32 lineNum)
             ++read;
         }
 
-        size_t lineLength = StringLength(line);
+        int lineLength = StringLength(line);
         size_t delta = read - line;
 
         if (delta != lineLength)
@@ -209,6 +180,19 @@ GetSymbolFromLine(Symbol *symbol, char *line, uint32 lineNum)
     }
 
     return result;
+}
+
+INTERNAL SrcInstruction
+MakeSrcInstruction(uint8 opCode, const char *name)
+{
+    SrcInstruction instr = {};
+
+    instr.name = static_cast<char*>(malloc(StringLength(name) + 1));
+    strcpy(instr.name, name);
+
+    instr.opCode = opCode;
+
+    return instr;
 }
 
 int
@@ -256,20 +240,44 @@ main(int argc, char **argv)
         return 1;
     }
 
+    AssemblerState state = {};
+    state.srcInstructionCount = 15; // Maybe we want to extend the instruction set with some DEBUG instructions at a later date...
+    state.srcInstructions      = static_cast<SrcInstruction*>(malloc(sizeof(SrcInstruction) * state.srcInstructionCount));
+
+    state.srcInstructions[0]  = MakeSrcInstruction(0x0, "JnS");
+    state.srcInstructions[1]  = MakeSrcInstruction(0x1, "Load");
+    state.srcInstructions[2]  = MakeSrcInstruction(0x2, "Store");
+    state.srcInstructions[3]  = MakeSrcInstruction(0x3, "Add");
+    state.srcInstructions[4]  = MakeSrcInstruction(0x4, "Subt");
+    state.srcInstructions[5]  = MakeSrcInstruction(0x5, "Input");
+    state.srcInstructions[6]  = MakeSrcInstruction(0x6, "Output");
+    state.srcInstructions[7]  = MakeSrcInstruction(0x7, "Halt");
+    state.srcInstructions[8]  = MakeSrcInstruction(0x8, "Skipcond");
+    state.srcInstructions[9]  = MakeSrcInstruction(0x9, "Jump");
+    state.srcInstructions[10] = MakeSrcInstruction(0xA, "Clear");
+    state.srcInstructions[11] = MakeSrcInstruction(0xB, "AddI");
+    state.srcInstructions[12] = MakeSrcInstruction(0xC, "JumpI");
+    state.srcInstructions[13] = MakeSrcInstruction(0xD, "LoadI");
+    state.srcInstructions[14] = MakeSrcInstruction(0xE, "StoreI");
+
     uint16 *marieMem = static_cast<uint16*>(calloc(sizeof(uint16), 4096));
 
+    // Record the starting pos of the file, so we can return to it after the first pass
     fpos_t inputFileStartPos = {};
     fgetpos(inputFile, &inputFileStartPos);
 
+    // Holds a line at a time
     const size_t INPUT_BUFFER_SIZE = 64;
     char inputBuffer[INPUT_BUFFER_SIZE];
 
     //
-    fgets(inputBuffer, INPUT_BUFFER_SIZE, inputFile);
     // Pass 1 - Symbol table
+    // 
+    fgets(inputBuffer, INPUT_BUFFER_SIZE, inputFile);
 
     uint32 line = 0;
     SymbolList symbols = {};
+
     while (!feof(inputFile))
     {
         StripCharFromString(inputBuffer, '\n');
@@ -291,18 +299,22 @@ main(int argc, char **argv)
     }
 
     //
+    // Pass 2 - Assembly
+    //
+    
+    // Reset the file pos to the start
     fsetpos(inputFile, &inputFileStartPos);
     fgets(inputBuffer, INPUT_BUFFER_SIZE, inputFile);
-    // Pass 2 
 
     line = 1;
-    size_t memoryIndex = 0;
+    int memoryIndex = 0;
+
     while (!feof(inputFile) && memoryIndex < 4096)
     {
         StripCharFromString(inputBuffer, '\n');
 
         BinaryInstruction instr = {};
-        LineResult lineResult = GetInstructionFromString(&instr, &symbols, inputBuffer);
+        LineResult lineResult = GetInstructionFromString(&state, &instr, &symbols, inputBuffer);
 
         if (lineResult == LineResult::VALID)
         {
@@ -320,13 +332,13 @@ main(int argc, char **argv)
         fgets(inputBuffer, INPUT_BUFFER_SIZE, inputFile);
     }
 
-    Free(&symbols);
+    // I don't give a shit about freeing all our memory here, since the process is about to terminate
+    // I will close file handles though
 
     fclose(inputFile);
 
     fwrite(marieMem, sizeof(uint16), 4096, outputFile);
 
-    free(marieMem);
     fclose(outputFile);
 
     return 0;

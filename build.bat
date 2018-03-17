@@ -18,11 +18,6 @@ set LINK_FLAGS_DEBUG=/DEBUG
 mkdir build 2> NUL
 pushd build\
 
-WHERE ctime >NUL 2>NUL
-IF %ERRORLEVEL% NEQ 0  cl -O2 /nologo ..\ctime\ctime.c /link winmm.lib
-
-call ctime -begin build.ctm
-
 cl %CL_FLAGS% %CL_FLAGS_DEBUG% ..\src\asm_marie.cpp /link %LINK_FLAGS% /OUT:%PRODUCT_ASM%
 cl %CL_FLAGS% %CL_FLAGS_DEBUG% ..\src\exe_marie.cpp /link %LINK_FLAGS% /OUT:%PRODUCT_EXE% 
 
@@ -35,6 +30,4 @@ mkdir data\ 2> NUL
 copy build\%PRODUCT_ASM% data\ >NUL
 copy build\%PRODUCT_EXE% data\ >NUL
 copy build\*.mar data\ >NUL
-
-call ctime -end build\build.ctm
 

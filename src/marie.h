@@ -82,3 +82,9 @@ struct Symbol
     uint16 addr;
 };
 
+struct MatchResult
+{
+    float weight;
+
+    void *match;
+};
