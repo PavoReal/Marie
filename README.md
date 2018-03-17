@@ -1,4 +1,4 @@
 # Marie
 A simple MARIE assembler and vm
 
-TODO(Peacock): Readme
+You can find a brief description of this project [here](https://garrisonpeacock.com/#marie)
