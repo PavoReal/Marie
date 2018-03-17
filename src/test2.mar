@@ -2,22 +2,23 @@ Jump Start
 
 ONE,  Dec 1
 
-a,    Dec 0
-b,    Dec 0
+a, Dec 0
+b, Dec 0
 
 prod, Dec 0
+dev,  Dec 0
 
 Start, Input
        Store a
        Input
        Store b
        Subt a
-       Skipcond 0x000
-       Jump Del
+       Skipcond 0x400
+       Jump Next
        Jump Final
 
-Del, Skipcond 0x800
-     Jump Div
+Next, Skipcond 0x800
+      Jump Div
 
 Mul, Load a
      Add prod
@@ -28,14 +29,26 @@ Mul, Load a
      Skipcond 0x400
      Jump Mul
      Load prod
-     Jump Out
+     Output
+     Jump Final
 
-Div, Load A
+Div, Load a
+     Subt b
+     Skipcond 0x800
+     Jump DivDone
+     Load dev
+     Add ONE
+     Jump Div
 
-Out, Output
+DivDone, Load dev
+         Output
+         Load a
+         Output
 
 Final, Clear
-       Store A
-       Store B
+       Store a
+       Store b
+       Store prod
+       Store dev
        Halt
 

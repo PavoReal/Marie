@@ -59,10 +59,10 @@ struct Marie
     BinaryInstruction regIR; 
 
     // Input register
-    int8 regIN;
+    uint16 regIN;
 
     // Output register
-    int8 regOUT;
+    uint16 regOUT;
 
     // Main memory
     uint16 *memory;
@@ -88,3 +88,4 @@ struct MatchResult
 
     void *match;
 };
+
