@@ -53,9 +53,9 @@ main(int argc, char **argv)
     }
 
     Marie marie = {};
-    marie.memory = static_cast<uint16*>(calloc(sizeof(uint16), 4096));
+    marie.memory = static_cast<u16*>(calloc(sizeof(u16), 4096));
 
-    fread(marie.memory, sizeof(uint16), 4096, inputFile);
+    fread(marie.memory, sizeof(u16), 4096, inputFile);
     fclose(inputFile);
 
     bool running  = true;
@@ -153,7 +153,7 @@ main(int argc, char **argv)
             //
             case 0x5:
             {
-                int16 input = {};
+                s16 input = {};
 
                 printf("? ");
                 scanf("%hd", &input);

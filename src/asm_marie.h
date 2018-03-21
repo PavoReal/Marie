@@ -5,14 +5,17 @@
 struct AssemblerState
 {
     SrcInstruction *srcInstructions;
-    uint32 srcInstructionCount;
+    u32 srcInstructionCount;
 };
 
-// TODO(Peacock): Make this a struct with more info like closest instr match
-enum class LineResult
+struct LineResult
 {
-    VALID,
-    ERROR,
-    SKIP
-};
+    enum Type
+    {
+        VALID,
+        ERROR,
+        SKIP
+    };
 
+    Type type;
+};

@@ -1,12 +1,13 @@
 #include "marie.h"
+#include "list.h"
 #include "math.h"
 #include "strings.h"
 
 //
 // https://en.wikipedia.org/wiki/Levenshtein_distance
 //
-int 
-LevenshteinDistance(char *s, int len_s, char *t, int len_t)
+u32 
+LevenshteinDistance(char *s, u32 len_s, char *t, u32 len_t)
 { 
   int cost;
 
@@ -38,19 +39,16 @@ LevenshteinDistance(char *s, int len_s, char *t, int len_t)
 }
 
 INTERNAL MatchResult
-GetBestSrcInstrMatch(SrcInstruction *instrs, uint32 instrCount, char *name)
+GetBestSrcInstrMatch(SrcInstruction *instrs, u32 instrCount, char *name)
 {
     int nameLength = StringLength(name);
 
-    int minIndex;
-    int minMin;
+    u32 minIndex = 0;
+    u32 minMin   = LevenshteinDistance(instrs[0].name, StringLength(instrs[0].name), name, nameLength);
 
-    minIndex = 0;
-    minMin   = LevenshteinDistance(instrs[0].name, StringLength(instrs[0].name), name, nameLength);
-
-    for (uint32 i = 1; (i < instrCount) && (minMin != 0); ++i)
+    for (u32 i = 1; (i < instrCount) && (minMin != 0); ++i)
     {
-        int min = LevenshteinDistance(instrs[i].name, StringLength(instrs[i].name), name, nameLength);
+        u32 min = LevenshteinDistance(instrs[i].name, StringLength(instrs[i].name), name, nameLength);
 
         if (min < minMin)
         {
@@ -62,6 +60,36 @@ GetBestSrcInstrMatch(SrcInstruction *instrs, uint32 instrCount, char *name)
     MatchResult result;
     result.weight = static_cast<float>(minMin);
     result.match  = instrs + minIndex;
+
+    return result;
+}
+
+INTERNAL MatchResult
+GetBestSymbolMatch(SymbolList *list, char *name)
+{
+    int nameLength = StringLength(name);
+
+    Symbol *symbolZero = PeakAt(list, 0);
+
+    u32 minIndex = 0;
+    u32 minMin   = LevenshteinDistance(symbolZero->name, StringLength(symbolZero->name), name, nameLength);
+
+    for (u32 i = 1; (i < list->count) && (minMin != 0); ++i)
+    {
+        Symbol *symbol = PeakAt(list, i);
+
+        u32 min = LevenshteinDistance(symbol->name, StringLength(symbol->name), name, nameLength);
+
+        if (min < minMin)
+        {
+            minMin = min;
+            minIndex = i;
+        }
+    }
+
+    MatchResult result;
+    result.weight = static_cast<float>(minMin);
+    result.match  = PeakAt(list, minIndex);
 
     return result;
 }

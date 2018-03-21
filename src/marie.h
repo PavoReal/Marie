@@ -5,16 +5,16 @@
 #define INTERNAL static
 #define GLOBAL   static
 
-using uint   = unsigned int;
-using uint8  = uint8_t;
-using uint16 = uint16_t;
-using uint32 = uint32_t;
-using uint64 = uint64_t;
+using uint = unsigned int;
+using u8   = uint8_t;
+using u16  = uint16_t;
+using u32  = uint32_t;
+using u64  = uint64_t;
 
-using int8  = int8_t;
-using int16 = int16_t;
-using int32 = int32_t;
-using int64 = int64_t;
+using s8  = int8_t;
+using s16 = int16_t;
+using s32 = int32_t;
+using s64 = int64_t;
 
 #pragma pack(push, 1)
 struct BinaryInstruction
@@ -23,13 +23,13 @@ struct BinaryInstruction
     {
         struct
         {
-            uint16 word;
+            u16 word;
         };
         
         struct 
         {
-            uint8 byte0;
-            uint8 byte1;
+            u8 byte0;
+            u8 byte1;
         };
 
         struct 
@@ -44,13 +44,13 @@ struct BinaryInstruction
 struct Marie
 {
     // Accumulator register
-    int16 regAC;
+    s16 regAC;
 
     // Memory address register
     unsigned regMAR: 12;
 
     // Memory buffer register
-    uint16 regMBR;
+    u16 regMBR;
 
     // Program counter
     unsigned regPC: 12;
@@ -59,33 +59,30 @@ struct Marie
     BinaryInstruction regIR; 
 
     // Input register
-    uint16 regIN;
+    u16 regIN;
 
     // Output register
-    uint16 regOUT;
+    u16 regOUT;
 
     // Main memory
-    uint16 *memory;
+    u16 *memory;
 };
 
 struct SrcInstruction
 {
-    unsigned opCode: 4;
-
     char *name;
+    unsigned opCode: 4;
 };
 
 struct Symbol
 {
     char *name;
-
-    uint16 addr;
+    u16 addr;
 };
 
 struct MatchResult
 {
-    float weight;
-
     void *match;
+    float weight;
 };
 

@@ -22,8 +22,6 @@
 #include "list.h"
 #include "math.h"
 
-using SymbolList = TList<Symbol>;
-
 #define OUTPUT_FILE_DEFAULT "a.marie"
 
 #include "marie.cpp"
@@ -31,10 +29,11 @@ using SymbolList = TList<Symbol>;
 INTERNAL LineResult
 GetInstructionFromString(AssemblerState *state, BinaryInstruction *instr, SymbolList *symbols, char *src)
 {
-    LineResult result = LineResult::ERROR;
+    LineResult result = {};
+    result.type = LineResult::ERROR;
 
-    uint8 opCode = {};
-    uint16 addr  = {};
+    u8 opCode = {};
+    u16 addr  = {};
 
     // Remove any tabs or spaces at the start of the line
     RemoveStartingSpaces(&src);
@@ -43,7 +42,7 @@ GetInstructionFromString(AssemblerState *state, BinaryInstruction *instr, Symbol
     if (!srcLength)
     {
         // If the line is empty we'll skip it
-        result = LineResult::SKIP;
+        result.type = LineResult::SKIP;
     }
     else
     {
@@ -75,41 +74,46 @@ GetInstructionFromString(AssemblerState *state, BinaryInstruction *instr, Symbol
             // to seperate the opcode and address
             src[lengthToSpace] = '\0';
 
-            // Loop through the symbol table and look for a matching symbol
-            for (uint32 i = 0; (i < symbols->count) && (!addr); ++i)
-            {
-                Symbol *symbol = PeakAt(symbols, i);
+            MatchResult symbolMatch = GetBestSymbolMatch(symbols, addrString);
 
-                // case sensitive
-                if (strcmp(symbol->name, addrString) == 0)
+            bool found = false;
+            if (symbolMatch.weight == 0)
+            {
+                Symbol *s = static_cast<Symbol*>(symbolMatch.match);
+                addr = s->addr;
+
+                found = true;
+            }
+            else
+            {
+                int base = 0;
+
+                bool isDigit   = isdigit(*addrString);
+                char lower     = tolower(*addrString);
+                char lowerNext = tolower(*(addrString + 1));
+
+                if ((lower == 'x') || ((lower == '0') && (lowerNext == 'x')))
                 {
-                    addr = symbol->addr;
+                    base = 16;
+                }
+                else if (isDigit)
+                {
+                    base = 10;
+                }
+
+                if (base)
+                {
+                    found = true;
+                    addr = CharsToNum<u16>(addrString, base);
                 }
             }
 
-            // If we didn't find a symbol, assume the address string is a constant
-            if (!addr)
+            if (!found)
             {
-                int base = 10;
+                printf("Unknown symbol: %s\n", addrString);
+                result.type = LineResult::ERROR;
 
-                // If the constant has a prefix of "0x", "0X', "x" or "X", we treat it as a hex constant
-                if (tolower(*addrString) == 'x' ||
-                    ((*addrString == '0') && (tolower(*(addrString + 1)) == 'x')))
-                {
-                    base = 16;
-
-                    if (*addrString == '0')
-                    {
-                        addrString += 2;
-                    }
-                    else
-                    {
-                        addrString += 1;
-                    }
-                }
-               
-                // We have our address
-                addr = CharsToNum<uint16>(addrString, base);
+                return result;
             }
         }
 
@@ -121,21 +125,21 @@ GetInstructionFromString(AssemblerState *state, BinaryInstruction *instr, Symbol
             SrcInstruction *s = static_cast<SrcInstruction*>(match.match);
 
             opCode = s->opCode;
-            result = LineResult::VALID;
+            result.type = LineResult::VALID;
         }
 
         // If we didn't find the opcode, it could still be a DEC or HEX constant
-        if (result != LineResult::VALID)
+        if (result.type != LineResult::VALID)
         {
             if (stricmp(src, "DEC") == 0)
             {
                 instr->word = addr;
-                result = LineResult::VALID;
+                result.type = LineResult::VALID;
             }
             else if (stricmp(src, "HEX") == 0)
             {
-                instr->word = CharsToNum<uint16>(addrString, 16);
-                result = LineResult::VALID;
+                instr->word = CharsToNum<u16>(addrString, 16);
+                result.type = LineResult::VALID;
             }
         }
         else
@@ -149,9 +153,10 @@ GetInstructionFromString(AssemblerState *state, BinaryInstruction *instr, Symbol
 }
 
 INTERNAL LineResult
-GetSymbolFromLine(Symbol *symbol, char *line, uint32 lineNum)
+GetSymbolFromLine(Symbol *symbol, char *line, u32 lineNum)
 {
-    LineResult result = LineResult::ERROR;
+    LineResult result =  {};
+    result.type = LineResult::ERROR;
 
     RemoveStartingSpaces(&line);
 
@@ -159,7 +164,7 @@ GetSymbolFromLine(Symbol *symbol, char *line, uint32 lineNum)
     if (!srcLength)
     {
         // Empty line
-        result = LineResult::SKIP;
+        result.type = LineResult::SKIP;
     }
     else
     {
@@ -170,7 +175,7 @@ GetSymbolFromLine(Symbol *symbol, char *line, uint32 lineNum)
         }
 
         int lineLength = StringLength(line);
-        int64 delta = read - line;
+        s64 delta = read - line;
 
         if (delta != lineLength)
         {
@@ -179,7 +184,7 @@ GetSymbolFromLine(Symbol *symbol, char *line, uint32 lineNum)
             strcpy(symbol->name, line);
             symbol->addr = lineNum;
 
-            result = LineResult::VALID;
+            result.type = LineResult::VALID;
         }
     }
 
@@ -187,7 +192,7 @@ GetSymbolFromLine(Symbol *symbol, char *line, uint32 lineNum)
 }
 
 INTERNAL SrcInstruction
-MakeSrcInstruction(uint8 opCode, const char *name)
+MakeSrcInstruction(u8 opCode, const char *name)
 {
     SrcInstruction instr = {};
 
@@ -264,7 +269,7 @@ main(int argc, char **argv)
     state.srcInstructions[13] = MakeSrcInstruction(0xD, "LoadI");
     state.srcInstructions[14] = MakeSrcInstruction(0xE, "StoreI");
 
-    uint16 *marieMem = static_cast<uint16*>(calloc(sizeof(uint16), 4096));
+    u16 *marieMem = static_cast<u16*>(calloc(sizeof(u16), 4096));
 
     // Record the starting pos of the file, so we can return to it after the first pass
     fpos_t inputFileStartPos = {};
@@ -279,7 +284,7 @@ main(int argc, char **argv)
     // 
     fgets(inputBuffer, INPUT_BUFFER_SIZE, inputFile);
 
-    uint32 line = 0;
+    u32 line = 0;
     SymbolList symbols = {};
 
     while (!feof(inputFile))
@@ -289,14 +294,14 @@ main(int argc, char **argv)
         Symbol symbol = {};
         LineResult valid = GetSymbolFromLine(&symbol, inputBuffer, line);
 
-        if (valid == LineResult::VALID)
+        if (valid.type == LineResult::VALID)
         {
             Push(&symbols, symbol);
         }
 
         fgets(inputBuffer, INPUT_BUFFER_SIZE, inputFile);
 
-        if (valid != LineResult::SKIP)
+        if (valid.type != LineResult::SKIP)
         {
             ++line;
         }
@@ -320,12 +325,12 @@ main(int argc, char **argv)
         BinaryInstruction instr = {};
         LineResult lineResult = GetInstructionFromString(&state, &instr, &symbols, inputBuffer);
 
-        if (lineResult == LineResult::VALID)
+        if (lineResult.type == LineResult::VALID)
         {
             // NOTE(Peacock): Should we make sure the bit order on disk is what we expect?
             marieMem[memoryIndex++] = instr.word; // ((instr.byte0 << 8) | (instr.byte1));
         }
-        else if (lineResult == LineResult::ERROR)
+        else if (lineResult.type == LineResult::ERROR)
         {
             fprintf(stderr, "Error: Invalid instruction on line %d...\n<< %s >>\nAborting...\n", line, inputBuffer);
 
@@ -341,7 +346,7 @@ main(int argc, char **argv)
 
     fclose(inputFile);
 
-    fwrite(marieMem, sizeof(uint16), 4096, outputFile);
+    fwrite(marieMem, sizeof(u16), 4096, outputFile);
 
     fclose(outputFile);
 

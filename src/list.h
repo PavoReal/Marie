@@ -1,26 +1,24 @@
 #pragma once
 
-template <typename T>
-struct TListNode
-{
-    T data;
+#include <cstdlib>
+#include "marie.h"
 
-    TListNode *prev;
+struct SymbolListNode
+{
+    Symbol data;
+    SymbolListNode *prev;
 };
 
-template <typename T>
-struct TList
+struct SymbolList
 {
-    TListNode<T> *head;
-
-    uint32 count;
+    SymbolListNode *head;
+    u32 count;
 };
 
-template <typename T>
 inline void
-Push(TList<T> *list, const T &a)
+Push(SymbolList *list, const Symbol &a)
 {
-    TListNode<T> *newHead = static_cast<TListNode<T>*>(malloc(sizeof(TListNode<T>)));
+    auto *newHead = static_cast<SymbolListNode*>(malloc(sizeof(SymbolListNode)));
     newHead->data = a;
     newHead->prev = list->head;
 
@@ -28,12 +26,10 @@ Push(TList<T> *list, const T &a)
     list->count += 1;
 }
 
-template <typename T>
-inline T
-Pop(TList<T> *list)
+inline Symbol
+Pop(SymbolList *list)
 {
-    T result = list->head->data;
-
+    auto result = list->head->data;
     auto oldHead = list->head;
 
     list->head = oldHead->prev;
@@ -43,12 +39,11 @@ Pop(TList<T> *list)
     return result;
 }
 
-template <typename T>
-inline T*
-PeakAt(TList<T> *list, uint32 index)
+inline Symbol*
+PeakAt(SymbolList *list, u32 index)
 {
     auto current = list->head;
-    for (uint32 i = 0; i < index; ++i)
+    for (u32 i = 0; i < index; ++i)
     {
         current = current->prev;
     }
@@ -56,9 +51,8 @@ PeakAt(TList<T> *list, uint32 index)
     return &current->data;
 }
 
-template <typename T>
 inline void
-Free(TList<T> *list)
+Free(SymbolList *list)
 {
     while (list->count)
     {
